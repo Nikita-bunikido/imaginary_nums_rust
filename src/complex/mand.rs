@@ -42,15 +42,76 @@ impl Coord {
         count >= iters - 2
     }
 
-    pub fn mand(&self) -> Vec<Vec<bool>> {
+    async fn part_mand(matrix :Vec<Vec<Complex>>, (x1, x2) :(i32, i32)) -> Vec<Vec<bool>> {
         let mut result: Vec<Vec<bool>> = vec![];
 
-        for i in 0..self.matrix.len() {
+        for i in x1..x2 {
             let mut str: Vec<bool> = vec![];
-            for j in 0..self.matrix[0].len() - 1 {
-                str.push(Self::dot_mand(&self.matrix[i][j]));
+            for j in 0..matrix[0].len() - 1 {
+                str.push(
+                    Self::dot_mand(
+                        &matrix[i as usize][j as usize]));
             }
             result.push(str);
+        }
+
+        result
+    }
+
+    pub async fn handle_mand(
+            matrix :Vec<Vec<Complex>>,
+            handles :i32, 
+            i :i32) -> Vec<Vec<bool>> {
+
+        let (x1, x2) :(i32, i32) = (
+            (matrix.len() as i32/handles*i),
+            matrix.len() as i32/handles*(i+1));
+
+        let part :Vec<Vec<bool>> = Self::part_mand(
+            matrix,
+            (x1,
+            x2)
+            ).await;
+
+        part
+    }
+
+    pub async fn mand(&self, handles :i32) -> Vec<Vec<bool>> {
+        let mut result :Vec<Vec<bool>> = vec![];
+        for i in 0..self.matrix.len() {
+            result.push(vec![]);
+            for _ in 0..self.matrix[0].len() {
+                result[i].push(false);
+            }
+        }
+
+        let mut program_handles = vec![];
+
+        for i in 0..handles {
+            let matrix = self.matrix.clone();
+            let handle = tokio::spawn(async move {
+
+                let part = Self::handle_mand(matrix.clone(), handles, i).await;
+
+                let (x1, x2) :(i32, i32) = (
+                    (matrix.len() as i32/handles*i),
+                    matrix.len() as i32/handles*(i+1));
+
+                return (part, x1, x2);
+            });
+
+            program_handles.push(handle);
+        }
+
+        for handle in program_handles {
+            let (part, x1, x2) = handle.await.unwrap();
+
+            for i in x1..x2 {
+                for j in 0..self.matrix[0].len() - 1 {
+                    result[i as usize][j as usize] = 
+                        part[(i-x1) as usize][j as usize];
+                }
+            }
         }
 
         result
@@ -71,3 +132,4 @@ pub fn print_mand(bool_coord: &Vec<Vec<bool>>, c: char) {
         println!();
     }
 }
+
