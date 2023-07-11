@@ -11,7 +11,7 @@ const N: i32 = 10;
 const X: f64 = -0.5505;
 const Y: f64 = -0.53875;
 const C: char = '␁'; // Color
-const H: i32 = 8; // handles
+const H: i32 = 8; // Handles
 
 #[tokio::main]
 async fn main() {
@@ -24,14 +24,14 @@ async fn main() {
         use crate::complex::mand;
         use std::time::{Duration, Instant};
 
-        //let frame_time = Duration::from_millis(0);
+        let frame_time = Duration::from_millis(15);
 
         let mut scale: f64 = 0.05; // Scale of coord network
         let mut frame = Instant::now();
 
         loop {
             // loop scale
-            //if Instant::now() - frame > frame_time {
+            if Instant::now() - frame > frame_time {
                 scale /= 1.01;
 
                 if let Some((tx, ty)) = term_size::dimensions() {
@@ -45,15 +45,14 @@ async fn main() {
                         ty as i32,
                     );
                     let bool_coord: Vec<Vec<bool>> = coord.mand(H).await; // Which dots is mond
-                    //mand::print_mand(&bool_coord, C);
-                    println!("{}", (Instant::now() - frame).as_nanos());
+                    mand::print_mand(&bool_coord, C);
 
                     frame = Instant::now();
                 } else {
                     eprintln!("65 string ERROR");
                     break;
                 }
-            //}
+            }
         }
     }
 }
